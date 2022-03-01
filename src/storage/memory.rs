@@ -32,9 +32,14 @@ impl Storage for MemTable {
         Ok(table.get(key).map(|v| v.value().clone()))
     }
 
-    fn set(&self, table: &str, key: String, value: Value) -> Result<Option<Value>, KvError> {
+    fn set(
+        &self,
+        table: &str,
+        key: impl Into<String>,
+        value: impl Into<Value>,
+    ) -> Result<Option<Value>, KvError> {
         let table = self.get_or_create_table(table);
-        Ok(table.insert(key, value))
+        Ok(table.insert(key.into(), value.into()))
     }
 
     fn contains(&self, table: &str, key: &str) -> Result<bool, KvError> {
@@ -76,4 +81,15 @@ impl From<(String, Value)> for Kvpair {
 }
 
 
+#[cfg(test)]
+mod tests{
+    use crate::MemTable;
 
+    #[test]
+    fn get_or_create_table_should_work() {
+        let store = MemTable::new();
+        assert!(!store.tables.contains_key("t1"));
+        store.get_or_create_table("t1");
+        assert!(store.tables.contains_key("t1"))
+    }
+}

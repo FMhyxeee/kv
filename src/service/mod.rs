@@ -1,5 +1,5 @@
 use crate::{
-    command_request::RequestData, CommandRequest, CommandResponse, KvError, MemTable, Storage, storage,
+    command_request::RequestData, CommandRequest, CommandResponse, KvError, MemTable, Storage,
 };
 use std::sync::Arc;
 use tracing::debug;
