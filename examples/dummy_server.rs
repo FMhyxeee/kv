@@ -1,12 +1,9 @@
-
-
 use anyhow::Result;
 use async_prost::AsyncProstStream;
-use futures::{StreamExt, SinkExt};
+use futures::{SinkExt, StreamExt};
 use kv::{CommandRequest, CommandResponse};
 use tokio::net::TcpListener;
 use tracing::info;
-
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -19,18 +16,17 @@ async fn main() -> Result<()> {
     loop {
         let (stream, addr) = listener.accept().await?;
         info!("client {:?} connected", addr);
-        tokio::spawn( async move {
-            let mut stream = 
+        tokio::spawn(async move {
+            let mut stream =
                 AsyncProstStream::<_, CommandRequest, CommandResponse, _>::from(stream).for_async();
-                while let Some(Ok(msg)) = stream.next().await {
-                    info!("Gto a new command {:?}", msg);
-                    let mut resp = CommandResponse::default();
-                    resp.status = 404;
-                    resp.message = "Not Found".into();
-                    stream.send(resp).await.unwrap();
-                }
-                info!("Client {:?} dealed", addr);
+            while let Some(Ok(msg)) = stream.next().await {
+                info!("Gto a new command {:?}", msg);
+                let mut resp = CommandResponse::default();
+                resp.status = 404;
+                resp.message = "Not Found".into();
+                stream.send(resp).await.unwrap();
+            }
+            info!("Client {:?} dealed", addr);
         });
     }
-
 }

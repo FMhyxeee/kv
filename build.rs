@@ -6,5 +6,4 @@ fn main() {
         .out_dir("src/pb")
         .compile_protos(&["abi.proto"], &["."])
         .unwrap();
-
 }

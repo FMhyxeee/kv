@@ -2,7 +2,9 @@ use std::sync::Arc;
 
 use tracing::debug;
 
-use crate::{Storage, CommandResponse, MemTable, CommandRequest, command_request::RequestData, KvError};
+use crate::{
+    command_request::RequestData, CommandRequest, CommandResponse, KvError, MemTable, Storage,
+};
 
 mod command_service;
 
@@ -19,9 +21,9 @@ pub struct Service<Store = MemTable> {
 
 impl<Store> Clone for Service<Store> {
     fn clone(&self) -> Self {
-        Self { 
+        Self {
             inner: Arc::clone(&self.inner),
-         }
+        }
     }
 }
 
@@ -32,7 +34,7 @@ pub struct ServiceInner<Store> {
 impl<Store: Storage> Service<Store> {
     pub fn new(store: Store) -> Self {
         Self {
-            inner: Arc::new(ServiceInner{ store}),
+            inner: Arc::new(ServiceInner { store }),
         }
     }
 
@@ -48,27 +50,23 @@ impl<Store: Storage> Service<Store> {
     }
 }
 
-
 // 从 Request中得到 Response, 目前处理HGET/HGETALL/HSET
-pub fn dispatch(cmd:CommandRequest, store: &impl Storage) -> CommandResponse {
+pub fn dispatch(cmd: CommandRequest, store: &impl Storage) -> CommandResponse {
     match cmd.request_data {
-        Some(RequestData::Hget(param)) => param.execute(store),        
-        Some(RequestData::Hgetall(param)) => param.execute(store),        
-        Some(RequestData::Hset(param)) => param.execute(store),        
+        Some(RequestData::Hget(param)) => param.execute(store),
+        Some(RequestData::Hgetall(param)) => param.execute(store),
+        Some(RequestData::Hset(param)) => param.execute(store),
         None => KvError::InvalidCommand("Request has no data".into()).into(),
         _ => KvError::Internal("Not implemented".into()).into(),
     }
-
 }
-
-
 
 #[cfg(test)]
 mod tests {
     use std::thread;
 
     use super::*;
-    use crate::{command_request::RequestData, MemTable, Value, Kvpair};
+    use crate::{command_request::RequestData, Kvpair, MemTable, Value};
 
     #[test]
     fn service_should_work() {
@@ -77,9 +75,7 @@ mod tests {
         let cloned = service.clone();
 
         let handle = thread::spawn(move || {
-            let res = cloned.execute(
-                CommandRequest::new_hset("t1", "k1", "v1".into())
-            );
+            let res = cloned.execute(CommandRequest::new_hset("t1", "k1", "v1".into()));
             assert_res_ok(res, &[Value::default()], &[]);
         });
         handle.join().unwrap();
@@ -139,9 +135,6 @@ mod tests {
         assert_res_ok(res, &[], pairs);
     }
 
-
-
-
     // 从 Request 中得到 Response，目前处理 HGET/HGETALL/HSET
     fn dispatch(cmd: CommandRequest, store: &impl Storage) -> CommandResponse {
         match cmd.request_data.unwrap() {
@@ -168,6 +161,4 @@ mod tests {
         assert_eq!(res.values, &[]);
         assert_eq!(res.pairs, &[]);
     }
-
-
 }

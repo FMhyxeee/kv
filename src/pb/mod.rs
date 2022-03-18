@@ -1,9 +1,8 @@
-
 use http::StatusCode;
 
-use crate::{Hget, Hgetall, Hset, CommandResponse, KvError};
+use crate::{CommandResponse, Hget, Hgetall, Hset, KvError};
 
-use self::abi::{CommandRequest, Value, command_request::RequestData, Kvpair, value};
+use self::abi::{command_request::RequestData, value, CommandRequest, Kvpair, Value};
 
 pub mod abi;
 
@@ -26,7 +25,7 @@ impl CommandRequest {
             request_data: Some(RequestData::Hget(Hget {
                 table: table.into(),
                 key: key.into(),
-            }))
+            })),
         }
     }
 
@@ -47,7 +46,6 @@ impl Kvpair {
         }
     }
 }
-
 
 impl From<String> for Value {
     fn from(s: String) -> Self {
@@ -73,7 +71,6 @@ impl From<i64> for Value {
     }
 }
 
-
 /// 从Value 转为为 CommandResponse
 impl From<Value> for CommandResponse {
     fn from(v: Value) -> Self {
@@ -85,7 +82,7 @@ impl From<Value> for CommandResponse {
     }
 }
 
-/// 从Vec<Kvpair>转化为CommandResponse 
+/// 从Vec<Kvpair>转化为CommandResponse
 impl From<Vec<Kvpair>> for CommandResponse {
     fn from(v: Vec<Kvpair>) -> Self {
         Self {
@@ -111,7 +108,6 @@ impl From<KvError> for CommandResponse {
             KvError::InvalidCommand(_) => result.status = StatusCode::BAD_REQUEST.as_u16() as _,
             _ => {}
         }
-
 
         result
     }

@@ -1,4 +1,3 @@
-
 use crate::Value;
 use thiserror::Error;
 
@@ -22,6 +21,3 @@ pub enum KvError {
     #[error("Internal error: {0}")]
     Internal(String),
 }
-
-
-

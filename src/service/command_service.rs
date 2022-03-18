@@ -1,6 +1,4 @@
-use crate::{CommandService, Hget, KvError, Hgetall, Hset, Value};
-
-
+use crate::{CommandService, Hget, Hgetall, Hset, KvError, Value};
 
 impl CommandService for Hget {
     fn execute(self, store: &impl crate::Storage) -> crate::CommandResponse {
@@ -28,8 +26,8 @@ impl CommandService for Hset {
                 Ok(Some(v)) => v.into(),
                 Ok(None) => Value::default().into(),
                 Err(e) => e.into(),
-            }
-            None =>Value::default().into(),
+            },
+            None => Value::default().into(),
         }
     }
 }

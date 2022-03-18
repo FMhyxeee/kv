@@ -1,11 +1,11 @@
 pub mod memory;
 
-use crate::{Value, Kvpair, KvError};
+use crate::{KvError, Kvpair, Value};
 
 /// 对存储的抽象， 我们其实并不关心数据存在哪里，只是定义这么和外界存储打交道
 /// 就是经典CRUD
 pub trait Storage {
-    // Retrieve 
+    // Retrieve
     fn get(&self, table: &str, key: &str) -> Result<Option<Value>, KvError>;
     // Contains
     fn contains(&self, table: &str, key: &str) -> Result<bool, KvError>;
@@ -18,5 +18,3 @@ pub trait Storage {
     // Get iterator
     fn get_iter(&self, table: &str) -> Result<Box<dyn Iterator<Item = Kvpair>>, KvError>;
 }
-
-
