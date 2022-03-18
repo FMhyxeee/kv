@@ -1,6 +1,6 @@
 use dashmap::{mapref::one::Ref, DashMap};
 
-use crate::{KvError, Kvpair, Storage, Value};
+use crate::{KvError, Kvpair, Storage, Value, StorageIter};
 
 /// 使用DashMap构建Memtable, 实现 Storage trait
 #[derive(Clone, Debug, Default)]
@@ -56,7 +56,17 @@ impl Storage for MemTable {
     }
 
     fn get_iter(&self, table: &str) -> Result<Box<dyn Iterator<Item = Kvpair>>, KvError> {
-        todo!()
+        // 使用 clone() 来获取 table 的 snapshot
+        let table = self.get_or_create_table(table).clone();
+        let iter = StorageIter::new(table.into_iter());
+        Ok(Box::new(iter))
+    }
+}
+
+
+impl From<(String, Value)> for Kvpair {
+    fn from(data: (String, Value)) -> Self {
+        Kvpair::new(data.0, data.1)
     }
 }
 

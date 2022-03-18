@@ -132,6 +132,16 @@ impl From<bool> for Value {
             value: Some(value::Value::Bool(b)),
         }
     }
+
+}
+
+/// 从i64到Value
+impl From<f64> for Value {
+    fn from(f: f64) -> Self {
+        Self {
+            value: Some(value::Value::Float(f)),
+        }
+    }
 }
 
 /// 从Value 转为为 CommandResponse
