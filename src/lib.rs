@@ -8,3 +8,4 @@ pub use pb::abi::*;
 pub use error::KvError;
 pub use storage::*;
 pub use service::*;
+pub use storage::memory::MemTable;
