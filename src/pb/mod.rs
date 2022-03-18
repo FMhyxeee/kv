@@ -1,6 +1,6 @@
 use http::StatusCode;
 
-use crate::{CommandResponse, Hget, Hgetall, Hset, KvError};
+use crate::{CommandResponse, Hget, Hgetall, Hset, KvError, Hmget, Hmset, Hdel, Hmdel, Hmexist, Hexist};
 
 use self::abi::{command_request::RequestData, value, CommandRequest, Kvpair, Value};
 
@@ -34,6 +34,60 @@ impl CommandRequest {
             request_data: Some(RequestData::Hgetall(Hgetall {
                 table: table.into(),
             })),
+        }
+    }
+
+    pub fn new_hmget(table: impl Into<String> , keys: Vec<String>) -> Self {
+        Self {
+            request_data: Some(RequestData::Hmget(Hmget {
+                table: table.into(),
+                keys: keys,
+            })),
+        }
+    }
+
+    pub fn new_hmset(table: impl Into<String>, pairs: Vec<Kvpair>) -> Self {
+        Self {
+            request_data: Some(RequestData::Hmset(Hmset {
+                table: table.into(),
+                pairs: pairs,
+            })),
+        }
+    }
+
+    pub fn new_hdel(table: impl Into<String>, keys: impl Into<String>) -> Self {
+        Self {
+            request_data: Some(RequestData::Hdel(Hdel {
+                table: table.into(),
+                key: keys.into(),
+            })),
+        }
+    }
+
+    pub fn new_hmdel(table: impl Into<String>, keys: Vec<String>) -> Self {
+        Self {
+            request_data: Some(RequestData::Hmdel(Hmdel {
+                table: table.into(),
+                keys : keys,
+            })),
+        }
+    }
+
+    pub fn new_hexist(table: impl Into<String>, key: impl Into<String>) -> Self {
+        Self {
+            request_data: Some(RequestData::Hexist(Hexist {
+                table: table.into(),
+                key: key.into(),
+            })),
+        }
+    }
+    
+    pub fn new_hmexist(table: impl Into<String>, keys: Vec<String>) -> Self {
+        Self {
+            request_data: Some(RequestData::Hmexist((Hmexist {
+                table: table.into(),
+                keys: keys,
+            }))),
         }
     }
 }
@@ -71,6 +125,15 @@ impl From<i64> for Value {
     }
 }
 
+/// 从bool转化为Value
+impl From<bool> for Value {
+    fn from(b: bool) -> Self {
+        Self {
+            value: Some(value::Value::Bool(b)),
+        }
+    }
+}
+
 /// 从Value 转为为 CommandResponse
 impl From<Value> for CommandResponse {
     fn from(v: Value) -> Self {
@@ -81,6 +144,18 @@ impl From<Value> for CommandResponse {
         }
     }
 }
+
+/// 从Vec<Value> 转化为 CommandResponse
+impl From<Vec<Value>> for CommandResponse {
+    fn from(v: Vec<Value>) -> Self {
+        Self {
+            status: StatusCode::OK.as_u16() as _,
+            values: v,
+            ..Default::default()
+        }
+    }
+}
+
 
 /// 从Vec<Kvpair>转化为CommandResponse
 impl From<Vec<Kvpair>> for CommandResponse {
