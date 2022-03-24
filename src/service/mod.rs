@@ -173,6 +173,7 @@ mod tests {
     }
 
     // 测试失败返回的结果
+    #[allow(dead_code)]
     fn assert_res_error(res: CommandResponse, code: u32, msg: &str) {
         assert_eq!(res.status, code);
         assert!(res.message.contains(msg));

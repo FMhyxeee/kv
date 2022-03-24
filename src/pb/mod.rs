@@ -84,10 +84,10 @@ impl CommandRequest {
     
     pub fn new_hmexist(table: impl Into<String>, keys: Vec<String>) -> Self {
         Self {
-            request_data: Some(RequestData::Hmexist((Hmexist {
+            request_data: Some(RequestData::Hmexist(Hmexist {
                 table: table.into(),
                 keys: keys,
-            }))),
+            })),
         }
     }
 }

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use async_prost::AsyncProstStream;
-use futures::{SinkExt, StreamExt};
+use futures::StreamExt;
 use kv::{CommandRequest, CommandResponse, MemTable, ServiceInner, Service};
 use tokio::net::TcpListener;
 use tracing::info;
@@ -25,6 +25,7 @@ async fn main() -> Result<()> {
             while let Some(Ok(cmd)) = stream.next().await {
                 info!("Gto a new command {:?}", cmd);
                 let res = svc.execute(cmd);
+                println!("{res:?}")
             }
             info!("Client {:?} dealed", addr);
         });
