@@ -8,6 +8,8 @@ pub enum KvError {
 
     #[error("Cannot parse command: `{0}`")]
     InvalidCommand(String),
+    #[error("Frame is larger than max size")]
+    FrameError,
     #[error("Cannot convert value {:0} to {1}")]
     ConvertError(Value, &'static str),
     #[error("Cannot process command {0} with table: {1}, key: {2}. Error: {}")]
