@@ -1,5 +1,5 @@
 use futures::{StreamExt, SinkExt};
-use kv::{ServiceInner, MemTable, Service, CommandRequest};
+use kv::{ServiceInner, memory::MemTable, Service, CommandRequest};
 use prost::Message;
 use tokio::net::TcpListener;
 use tokio_util::codec::{LengthDelimitedCodec, Framed};

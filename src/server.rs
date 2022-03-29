@@ -1,6 +1,6 @@
 
 use anyhow::Result;
-use kv::{ServiceInner, MemTable, Service, ProstServerStream};
+use kv::{ServiceInner, memory::MemTable, Service, ProstServerStream};
 use tokio::net::TcpListener;
 use tracing::info;
 

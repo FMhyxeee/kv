@@ -112,7 +112,7 @@ impl CommandService for Hmexist {
 
 #[cfg(test)]
 mod tests{
-    use crate::{MemTable, CommandRequest, CommandResponse, Storage, command_request::RequestData, Kvpair};
+    use crate::{CommandRequest, CommandResponse, Storage, command_request::RequestData, Kvpair, memory::MemTable};
 
     use super::*;
     

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tracing::debug;
 
 use crate::{
-    command_request::RequestData, CommandRequest, CommandResponse, MemTable, Storage,
+    command_request::RequestData, CommandRequest, CommandResponse, memory::MemTable, Storage,
 };
 
 mod command_service;
@@ -144,7 +144,7 @@ mod tests {
     use tracing::info;
 
     use super::*;
-    use crate::{Kvpair, MemTable, Value};
+    use crate::{Kvpair, memory::MemTable, Value};
 
     #[test]
     fn service_should_work() {

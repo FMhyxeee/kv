@@ -100,7 +100,7 @@ mod tests {
     use bytes::Bytes;
     use tokio::net::{TcpListener, TcpStream};
 
-    use crate::{ServiceInner, Service, ProstServerStream, MemTable, CommandRequest, Value, ProstClientStream, CommandResponse, Kvpair};
+    use crate::{ServiceInner, Service, ProstServerStream, memory::MemTable, CommandRequest, Value, ProstClientStream, CommandResponse, Kvpair};
 
     #[tokio::test]
     async fn client_server_basic_communication_should_work() -> anyhow::Result<()> {
