@@ -126,14 +126,19 @@ impl<Store: Storage> Service<Store> {
     }
 }
 
-// 从 Request 中得到 Response，目前处理 HGET/HGETALL/HSET
+// 从 Request 中得到 Response,已经实现了9个方法。
 pub fn dispatch(cmd: CommandRequest, store: &impl Storage) -> CommandResponse {
     match cmd.request_data {
         Some(RequestData::Hget(param)) => param.execute(store),
+        Some(RequestData::Hmget(param)) => param.execute(store),
         Some(RequestData::Hgetall(param)) => param.execute(store),
         Some(RequestData::Hset(param)) => param.execute(store),
+        Some(RequestData::Hmset(param)) => param.execute(store),
+        Some(RequestData::Hdel(param)) => param.execute(store),
+        Some(RequestData::Hmdel(param)) => param.execute(store),
+        Some(RequestData::Hexist(param)) => param.execute(store),
+        Some(RequestData::Hmexist(param)) => param.execute(store),
         None => KvError::InvalidCommand("Request has no data".into()).into(),
-        _ => KvError::Internal("Not implemented".into()).into(),
     }
 }
 
