@@ -1,7 +1,9 @@
 pub mod memory;
+pub mod sleddb;
 
 
 pub use memory::MemTable;
+pub use sleddb::SledDb;
 use crate::{KvError, Kvpair, Value};
 
 
