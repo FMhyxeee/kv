@@ -142,7 +142,14 @@ pub fn dispatch(cmd: CommandRequest, store: &impl Storage) -> CommandResponse {
     }
 }
 
-
+// 测试成功返回的结果
+pub fn assert_res_ok(mut res: CommandResponse, values: &[Value], pairs: &[Kvpair]) {
+    res.pairs.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    assert_eq!(res.status, 200);
+    assert_eq!(res.message, "");
+    assert_eq!(res.values, values);
+    assert_eq!(res.pairs, pairs);
+}
 
 #[cfg(test)]
 mod tests {
@@ -152,16 +159,7 @@ mod tests {
 
     use super::*;
 
-    
 
-    // 测试成功返回的结果
-    fn assert_res_ok(mut res: CommandResponse, values: &[Value], pairs: &[Kvpair]) {
-        res.pairs.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        assert_eq!(res.status, 200);
-        assert_eq!(res.message, "");
-        assert_eq!(res.values, values);
-        assert_eq!(res.pairs, pairs);
-    }
 
     // // 测试失败返回的结果
     // fn assert_res_error(res: CommandResponse, code: u32, msg: &str) {

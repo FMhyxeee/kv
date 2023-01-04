@@ -3,6 +3,7 @@ use std::io::{Write, Read};
 use bytes::{BytesMut, BufMut, Buf};
 use flate2::{Compression, write::GzEncoder, read::GzDecoder};
 use prost::Message;
+use tokio::io::{AsyncRead, AsyncReadExt};
 use tracing::debug;
 
 use crate::{KvError, CommandRequest, CommandResponse};
@@ -93,6 +94,21 @@ fn decode_header(header: usize) -> (usize, bool) {
     (len, compressed)
 }
 
+/// 从 stream 中 读取一个完整的 frame
+pub async fn read_frame<S>(stream: &mut S, buf: &mut BytesMut) -> Result<(), KvError> 
+where 
+    S: AsyncRead + Unpin + Send,
+{
+    let header = stream.read_u32().await? as usize;
+    let (len, _compressed) = decode_header(header);
+    // 如果没那么大的内存，先分配一个frame的内存，保证可用
+    buf.reserve(LEN_LEN + len);
+    buf.put_u32(header as _);
+    unsafe{ buf.advance_mut(len)};
+    stream.read_exact(&mut buf[LEN_LEN..]).await?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use bytes::Bytes;
@@ -144,6 +160,37 @@ mod tests {
         assert_eq!(res, res1);    
     }
 
+    struct DummyStream {
+        buf: BytesMut,
+    }
+
+    impl AsyncRead for DummyStream {
+        fn poll_read(
+            self: std::pin::Pin<&mut Self>,
+            _cx: &mut std::task::Context<'_>,
+            buf: &mut tokio::io::ReadBuf<'_>,
+        ) -> std::task::Poll<Result<(), std::io::Error>> {
+            let len = buf.capacity();
+
+            let data = self.get_mut().buf.split_to(len);
+
+            buf.put_slice(&data[..]);
+            std::task::Poll::Ready(Ok(()))
+        }
+    }
+
+    #[tokio::test]
+    async fn read_frame_should_work() {
+        let mut buf = BytesMut::new();
+        let cmd = CommandRequest::new_hdel("t1", "k1");
+        cmd.encode_frame(&mut buf).unwrap();
+
+        let mut stream = DummyStream { buf };
+        let mut data = BytesMut::new();
+        read_frame(&mut stream, &mut data).await.unwrap();
+        let cmd1 = CommandRequest::decode_frame(&mut data).unwrap();
+        assert_eq!(cmd, cmd1);
+    }
 
 
 
