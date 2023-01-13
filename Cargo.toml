@@ -32,6 +32,7 @@ tracing-subscriber = "0.3.15"
 async-prost = "0.2.1"
 futures = "0.3"
 tokio-util = { version = "0.7", features = ["codec"] }
+certify = "0.5.1"
 
 
 [build-dependencies]
