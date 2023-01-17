@@ -3,6 +3,7 @@ mod tls;
 
 use bytes::BytesMut;
 pub use frame::FrameCoder;
+pub use tls::*;
 use tokio::io::{AsyncRead, AsyncWrite, AsyncWriteExt};
 use tracing::info;
 
