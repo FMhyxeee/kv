@@ -1,4 +1,3 @@
-
 use crate::*;
 
 impl CommandService for Hget {
@@ -36,12 +35,11 @@ impl CommandService for Hgetall {
 impl CommandService for Hset {
     fn execute(self, store: &impl Storage) -> CommandResponse {
         match self.pair {
-            Some(v) =>
-                match store.set(&self.table, v.key, v.value.unwrap_or_default()) {
-                    Ok(Some(v)) => v.into(),
-                    Ok(None) => Value::default().into(),
-                    Err(e) => e.into(),
-                },
+            Some(v) => match store.set(&self.table, v.key, v.value.unwrap_or_default()) {
+                Ok(Some(v)) => v.into(),
+                Ok(None) => Value::default().into(),
+                Err(e) => e.into(),
+            },
             None => Value::default().into(),
         }
     }
@@ -51,7 +49,8 @@ impl CommandService for Hmset {
     fn execute(self, store: &impl Storage) -> CommandResponse {
         let pairs = self.pairs;
         let table = self.table;
-        pairs.into_iter()
+        pairs
+            .into_iter()
             .map(|pair| {
                 let result = store.set(&table, pair.key, pair.value.unwrap_or_default());
                 match result {
@@ -98,7 +97,8 @@ impl CommandService for Hexist {
 
 impl CommandService for Hmexist {
     fn execute(self, store: &impl Storage) -> CommandResponse {
-        self.keys.iter()
+        self.keys
+            .iter()
             .map(|key| match store.contains(&self.table, key) {
                 Ok(v) => v.into(),
                 _ => Value::default(),
@@ -108,11 +108,9 @@ impl CommandService for Hmexist {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    
 
     #[test]
     fn hset_should_work() {
@@ -219,7 +217,7 @@ mod tests {
         let res = dispatch(cmd, &store);
         assert_res_ok(res, &[true.into()], &[]);
     }
-    
+
     #[test]
     fn hmexist_should_work() {
         let store = MemTable::new();
@@ -229,7 +227,7 @@ mod tests {
         let res = dispatch(cmd, &store);
         assert_res_ok(res, &[true.into(), false.into()], &[]);
     }
- 
+
     // 测试成功返回的结果
     fn assert_res_ok(mut res: CommandResponse, values: &[Value], pairs: &[Kvpair]) {
         res.pairs.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -246,7 +244,6 @@ mod tests {
         assert_eq!(res.values, &[]);
         assert_eq!(res.pairs, &[]);
     }
-
 
     fn set_key_pairs<T: Into<Value>>(table: &str, pairs: Vec<(&str, T)>, store: &impl Storage) {
         pairs

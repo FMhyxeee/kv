@@ -1,6 +1,6 @@
 use anyhow::Result;
 use futures::{SinkExt, StreamExt};
-use kv::{Service, ServiceInner, MemTable, CommandRequest};
+use kv::{CommandRequest, MemTable, Service, ServiceInner};
 use prost::Message;
 use tokio::net::TcpListener;
 use tokio_util::codec::{Framed, LengthDelimitedCodec};
@@ -35,5 +35,4 @@ async fn main() -> Result<()> {
             info!("Connection closed");
         });
     }
-
 }

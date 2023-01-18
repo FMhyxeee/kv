@@ -1,11 +1,9 @@
 pub mod memory;
 pub mod sleddb;
 
-
+use crate::{KvError, Kvpair, Value};
 pub use memory::MemTable;
 pub use sleddb::SledDb;
-use crate::{KvError, Kvpair, Value};
-
 
 /// 对存储的抽象，我们不关心数据存在哪儿，但需要定义外界如何和存储打交道
 pub trait Storage {
@@ -21,10 +19,7 @@ pub trait Storage {
     fn get_all(&self, table: &str) -> Result<Vec<Kvpair>, KvError>;
     /// 遍历 HashTable，返回 kv pair 的 Iterator
     fn get_iter(&self, table: &str) -> Result<Box<dyn Iterator<Item = Kvpair>>, KvError>;
-
 }
-
-
 
 /// 提供 Storage iterator， 这样 trait 的实现者只需要
 /// 把他们的 iterator 提供给 StorageIter， 然后他们保证 next() 传出来的类型实现了 Into<Kvpair> 即可
@@ -49,4 +44,3 @@ where
         self.data.next().map(|data| data.into())
     }
 }
-

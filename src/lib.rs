@@ -1,11 +1,11 @@
-mod pb;
 mod error;
-mod storage;
-mod service;
 mod network;
+mod pb;
+mod service;
+mod storage;
 
-pub use pb::abi::*;
 pub use error::KvError;
-pub use storage::*;
-pub use service::*;
 pub use network::*;
+pub use pb::abi::*;
+pub use service::*;
+pub use storage::*;

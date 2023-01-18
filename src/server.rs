@@ -1,4 +1,3 @@
-
 use anyhow::Result;
 use kv::{MemTable, ProstServerStream, Service, ServiceInner, TlsServerAcceptor};
 use tokio::net::TcpListener;
@@ -21,9 +20,9 @@ async fn main() -> Result<()> {
         let (stream, addr) = listener.accept().await?;
         info!("Client {:?} connected", addr);
         let stream = tls.accept(stream).await?;
-        
+
         let stream = ProstServerStream::new(stream, service.clone());
-        
+
         tokio::spawn(async move { stream.process().await });
     }
 }

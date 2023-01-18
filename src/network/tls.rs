@@ -1,4 +1,3 @@
-
 use std::io::Cursor;
 use std::sync::Arc;
 
@@ -149,15 +148,16 @@ fn load_key(key: &str) -> Result<PrivateKey, KvError> {
     Err(KvError::CertifcateParseError("private", "key"))
 }
 
-
 #[cfg(test)]
 mod tests {
+    use anyhow::{Ok, Result};
     use std::net::SocketAddr;
-    use anyhow::{Result, Ok};
-    use tokio::{net::{TcpListener, TcpStream}, io::{AsyncReadExt, AsyncWriteExt}};
+    use tokio::{
+        io::{AsyncReadExt, AsyncWriteExt},
+        net::{TcpListener, TcpStream},
+    };
 
     use super::*;
-
 
     const CA_CERT: &str = include_str!("../../fixtures/ca.cert");
     const CLIENT_CERT: &str = include_str!("../../fixtures/client.cert");
@@ -176,15 +176,13 @@ mod tests {
         let mut stream = connector.connect(stream).await?;
 
         stream.write_all(b"hello world!").await?;
-        
+
         let mut buf = [0; 12];
         stream.read_exact(&mut buf).await?;
 
         assert_eq!(&buf, b"hello world!");
         Ok(())
-        
     }
-
 
     #[tokio::test]
     async fn tls_with_client_should_work() -> Result<()> {
@@ -222,7 +220,7 @@ mod tests {
         let acceptor = TlsServerAcceptor::new(SERVER_CERT, SERVER_KEY, ca)?;
         let echo = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = echo.local_addr().unwrap();
-        
+
         tokio::spawn(async move {
             let (stream, _) = echo.accept().await.unwrap();
             let mut stream = acceptor.accept(stream).await.unwrap();
@@ -231,6 +229,5 @@ mod tests {
             stream.write_all(&buf).await.unwrap();
         });
         Ok(addr)
-
     }
 }

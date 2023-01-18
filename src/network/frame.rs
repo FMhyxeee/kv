@@ -1,13 +1,12 @@
-use std::io::{Write, Read};
+use std::io::{Read, Write};
 
-use bytes::{BytesMut, BufMut, Buf};
-use flate2::{Compression, write::GzEncoder, read::GzDecoder};
+use bytes::{Buf, BufMut, BytesMut};
+use flate2::{read::GzDecoder, write::GzEncoder, Compression};
 use prost::Message;
 use tokio::io::{AsyncRead, AsyncReadExt};
 use tracing::debug;
 
-use crate::{KvError, CommandRequest, CommandResponse};
-
+use crate::{CommandRequest, CommandResponse, KvError};
 
 // 长度占用4个字节
 pub const LEN_LEN: usize = 4;
@@ -22,7 +21,7 @@ const COMPRESSION_BIT: usize = 1 << 31;
 
 // 处理 Frame 的 encode/decode
 pub trait FrameCoder
-where 
+where
     Self: Message + Sized + Default,
 {
     /// 把一个 Message encode 成一个 frame
@@ -95,8 +94,8 @@ fn decode_header(header: usize) -> (usize, bool) {
 }
 
 /// 从 stream 中 读取一个完整的 frame
-pub async fn read_frame<S>(stream: &mut S, buf: &mut BytesMut) -> Result<(), KvError> 
-where 
+pub async fn read_frame<S>(stream: &mut S, buf: &mut BytesMut) -> Result<(), KvError>
+where
     S: AsyncRead + Unpin + Send,
 {
     let header = stream.read_u32().await? as usize;
@@ -104,7 +103,7 @@ where
     // 如果没那么大的内存，先分配一个frame的内存，保证可用
     buf.reserve(LEN_LEN + len);
     buf.put_u32(header as _);
-    unsafe{ buf.advance_mut(len)};
+    unsafe { buf.advance_mut(len) };
     stream.read_exact(&mut buf[LEN_LEN..]).await?;
     Ok(())
 }
@@ -134,7 +133,7 @@ mod tests {
     fn command_response_encode_decode_should_work() {
         let mut buf = BytesMut::new();
 
-        let values: Vec<Value> = vec![1.into(), "hello".into(), b"data".into()];    
+        let values: Vec<Value> = vec![1.into(), "hello".into(), b"data".into()];
         let res: CommandResponse = values.into();
         res.encode_frame(&mut buf).unwrap();
 
@@ -143,21 +142,20 @@ mod tests {
         let res1 = CommandResponse::decode_frame(&mut buf).unwrap();
 
         assert_eq!(res, res1);
-        
     }
 
     #[test]
     fn command_response_comressed_encode_decode_should_work() {
         let mut buf = BytesMut::new();
 
-        let value: Value = Bytes::from(vec![0u8; COMPRESSION_LIMIT +1]).into(); 
+        let value: Value = Bytes::from(vec![0u8; COMPRESSION_LIMIT + 1]).into();
         let res: CommandResponse = value.into();
         res.encode_frame(&mut buf).unwrap();
 
         assert_eq!(is_compressed(&buf), true);
 
         let res1 = CommandResponse::decode_frame(&mut buf).unwrap();
-        assert_eq!(res, res1);    
+        assert_eq!(res, res1);
     }
 
     struct DummyStream {
@@ -191,8 +189,6 @@ mod tests {
         let cmd1 = CommandRequest::decode_frame(&mut data).unwrap();
         assert_eq!(cmd, cmd1);
     }
-
-
 
     fn is_compressed(data: &[u8]) -> bool {
         if let &[v] = &data[..1] {

@@ -1,5 +1,5 @@
-use anyhow::{Result, Ok};
-use certify::{CertType, generate_ca, load_ca, CA, generate_cert};
+use anyhow::{Ok, Result};
+use certify::{generate_ca, generate_cert, load_ca, CertType, CA};
 use tokio::fs;
 
 struct CertPem {
@@ -14,12 +14,11 @@ async fn main() -> Result<()> {
     gen_files(&pem).await?;
 
     let ca = load_ca(&pem.cert, &pem.key)?;
-    
+
     let pem = create_cert(&ca, &["kvserver.acme.inc"], "Acme KV server", false)?;
     gen_files(&pem).await?;
     let pem = create_cert(&ca, &[], "awesome-device-id", true)?;
     gen_files(&pem).await?;
-    
 
     Ok(())
 }
@@ -56,7 +55,6 @@ fn create_cert(ca: &CA, domains: &[&str], cn: &str, is_client: bool) -> Result<C
         key: key,
     })
 }
-
 
 async fn gen_files(pem: &CertPem) -> Result<()> {
     let name = match pem.cert_type {

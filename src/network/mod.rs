@@ -1,13 +1,15 @@
 mod frame;
+mod stream;
 mod tls;
 
 use bytes::BytesMut;
-pub use frame::FrameCoder;
-pub use tls::*;
 use tokio::io::{AsyncRead, AsyncWrite, AsyncWriteExt};
 use tracing::info;
 
-use crate::{Service, KvError, CommandResponse, CommandRequest};
+pub use frame::FrameCoder;
+pub use stream::*;
+pub use tls::*;
+use crate::{CommandRequest, CommandResponse, KvError, Service};
 
 use self::frame::read_frame;
 
@@ -23,7 +25,7 @@ pub struct ProstClientStream<S> {
 }
 
 impl<S> ProstServerStream<S>
-where 
+where
     S: AsyncRead + AsyncWrite + Unpin + Send,
 {
     pub fn new(stream: S, service: Service) -> Self {
@@ -58,15 +60,12 @@ where
     }
 }
 
-
 impl<S> ProstClientStream<S>
 where
     S: AsyncRead + AsyncWrite + Unpin + Send,
 {
     pub fn new(stream: S) -> Self {
-        Self {
-            inner: stream,
-        }
+        Self { inner: stream }
     }
 
     pub async fn execute(&mut self, cmd: CommandRequest) -> Result<CommandResponse, KvError> {
@@ -90,7 +89,6 @@ where
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
@@ -98,7 +96,7 @@ mod tests {
     use std::net::SocketAddr;
     use tokio::net::{TcpListener, TcpStream};
 
-    use crate::{ MemTable, ServiceInner, Value, assert_res_ok};
+    use crate::{assert_res_ok, MemTable, ServiceInner, Value};
 
     use super::*;
 

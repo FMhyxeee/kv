@@ -1,4 +1,3 @@
-
 use sled::{Db, IVec};
 use std::{convert::TryInto, path::Path, str};
 
@@ -90,7 +89,3 @@ fn ivec_to_key(ivec: &[u8]) -> &str {
     iter.next();
     iter.next().unwrap()
 }
-
-
-
-

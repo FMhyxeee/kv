@@ -1,11 +1,8 @@
 mod command_service;
 
-
-
+use crate::{command_request::RequestData, *};
 use std::sync::Arc;
 use tracing::debug;
-use crate::{*, command_request::RequestData};
-
 
 // 对 Command 的处理的抽象
 pub trait CommandService {
@@ -60,12 +57,10 @@ pub trait Notify<Arg> {
     fn notify(&self, arg: &Arg);
 }
 
-
 // 事件通知（可变事件）
 pub trait NotifyMut<Arg> {
     fn notify(&self, arg: &mut Arg);
 }
-
 
 impl<Arg> Notify<Arg> for Vec<fn(&Arg)> {
     #[inline]
@@ -77,7 +72,7 @@ impl<Arg> Notify<Arg> for Vec<fn(&Arg)> {
 }
 
 impl<Arg> NotifyMut<Arg> for Vec<fn(&mut Arg)> {
-  #[inline]
+    #[inline]
     fn notify(&self, arg: &mut Arg) {
         for f in self {
             f(arg)
@@ -100,23 +95,21 @@ pub struct Service<Store = MemTable> {
 
 impl<Store> Clone for Service<Store> {
     fn clone(&self) -> Self {
-        Self { 
+        Self {
             inner: Arc::clone(&self.inner),
-         }
+        }
     }
 }
 
-
 impl<Store: Storage> Service<Store> {
-
     pub fn execute(&self, cmd: CommandRequest) -> CommandResponse {
         debug!("Got request: {:?}", cmd);
         self.inner.on_received.notify(&cmd);
-        
+
         let mut res = dispatch(cmd, &self.inner.store);
 
         debug!("Executed resposne: {:?}", res);
-        
+
         self.inner.on_executed.notify(&res);
         self.inner.on_before_send.notify(&mut res);
         if !self.inner.on_before_send.is_empty() {
@@ -153,13 +146,11 @@ pub fn assert_res_ok(mut res: CommandResponse, values: &[Value], pairs: &[Kvpair
 
 #[cfg(test)]
 mod tests {
-    use std::thread;
     use reqwest::StatusCode;
+    use std::thread;
     use tracing::info;
 
     use super::*;
-
-
 
     // // 测试失败返回的结果
     // fn assert_res_error(res: CommandResponse, code: u32, msg: &str) {
@@ -177,17 +168,16 @@ mod tests {
 
         let cloned = service.clone();
 
-        let handle = thread::spawn(move || { 
+        let handle = thread::spawn(move || {
             let res = cloned.execute(CommandRequest::new_hset("t1", "k1", "v1".into()));
-            assert_res_ok(res, &[Value::default()], &[]); 
+            assert_res_ok(res, &[Value::default()], &[]);
         });
 
         handle.join().unwrap();
-        // 在当前线程下读取 table t1 的 k1，应该返回 v1        
-        let res = service.execute(CommandRequest::new_hget("t1", "k1"));        
+        // 在当前线程下读取 table t1 的 k1，应该返回 v1
+        let res = service.execute(CommandRequest::new_hget("t1", "k1"));
         assert_res_ok(res, &["v1".into()], &[]);
     }
-
 
     #[test]
     fn event_registeration_should_work() {

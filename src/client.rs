@@ -1,4 +1,3 @@
-
 use anyhow::Result;
 use kv::{CommandRequest, ProstClientStream, TlsClientConnector};
 use tokio::net::TcpStream;
@@ -14,8 +13,6 @@ async fn main() -> Result<()> {
     // 连接服务器
     let stream = TcpStream::connect(addr).await?;
     let stream = connector.connect(stream).await?;
-
-    
 
     let mut client = ProstClientStream::new(stream);
 
