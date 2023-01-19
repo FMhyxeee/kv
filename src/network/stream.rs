@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, task::Poll};
+use std::{marker::PhantomData, task::Poll, pin::Pin};
 
 use bytes::BytesMut;
 
@@ -15,6 +15,8 @@ pub struct ProstStream<S, In, Out>  {
     stream: S,
     // 写缓存
     wbuf: BytesMut,
+    // 写入了多少字节
+    written: usize,
     // 读缓存
     rbuf: BytesMut,
 
@@ -56,20 +58,83 @@ where
 {
     type Error = KvError;
 
-    fn poll_ready(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> std::task::Poll<Result<(), Self::Error>> {
-        todo!()
+    fn poll_ready(self: std::pin::Pin<&mut Self>, _cx: &mut std::task::Context<'_>) -> std::task::Poll<Result<(), Self::Error>> {
+        Poll::Ready(Ok(()))
     }
 
     fn start_send(self: std::pin::Pin<&mut Self>, item: Out) -> Result<(), Self::Error> {
-        todo!()
+        let this = self.get_mut();
+        item.encode_frame(&mut this.wbuf)?;
+
+        Ok(())
     }
 
     fn poll_flush(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> std::task::Poll<Result<(), Self::Error>> {
-        todo!()
+        let this = self.get_mut();
+
+        while this.written != this.wbuf.len() {
+            let n = ready!(Pin::new(&mut this.stream).poll_write(cx, &this.wbuf[this.written..]))?;
+            this.written += n;
+        }
+
+        // 清除 wbuf
+        this.wbuf.clear();
+        this.written = 0;
+        // 调用stream的poll_flush确保写入
+        ready!(Pin::new(&mut this.stream).poll_flush(cx))?;
+        Poll::Ready(Ok(()))
     }
 
-    fn poll_close(self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> std::task::Poll<Result<(), Self::Error>> {
-        todo!()
+    fn poll_close(mut self: std::pin::Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> std::task::Poll<Result<(), Self::Error>> {
+        ready!(self.as_mut().poll_flush(cx))?;
+        ready!(Pin::new(&mut self.get_mut().stream).poll_shutdown(cx))?;
+        Poll::Ready(Ok(()))
     }
 
+}
+
+
+impl<S, In, Out> ProstStream<S, In, Out>
+where 
+    S: AsyncRead + AsyncWrite + Send + Unpin,
+{
+    pub fn new(stream: S) -> Self {
+        Self {
+            stream, 
+            written: 0,
+            wbuf: BytesMut::new(),
+            rbuf: BytesMut::new(),
+            _in: PhantomData::default(),
+            _out: PhantomData::default(),
+        }
+    }
+}
+
+impl<S, Req, Res> Unpin for ProstStream<S, Req, Res> where S:Unpin {}
+
+#[cfg(test)]
+mod tests {
+    use crate::{utils::DummyStream, CommandRequest};
+
+    use super::*;
+    use anyhow::Result;
+    use futures::{SinkExt, StreamExt};
+
+
+    #[tokio::test]
+    async fn prost_stream_should_work() -> Result<()> {
+        let buf = BytesMut::new();
+        let stream = DummyStream { buf };
+        let mut stream = ProstStream::< _, CommandRequest, CommandRequest>::new(stream);
+        let cmd = CommandRequest::new_hdel("t1", "k1");
+        stream.send(cmd.clone()).await?;
+        if let Some(Ok(s)) = stream.next().await {
+            assert_eq!(s, cmd);
+        } else {
+            assert!(false);
+        }
+
+        Ok(())
+
+    }
 }
