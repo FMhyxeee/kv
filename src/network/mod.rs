@@ -1,17 +1,17 @@
 mod frame;
+mod multiplex;
 mod stream;
 mod tls;
-
 
 use futures::{SinkExt, StreamExt};
 use tokio::io::{AsyncRead, AsyncWrite};
 use tracing::info;
 
+use crate::{CommandRequest, CommandResponse, KvError, Service};
 pub use frame::FrameCoder;
+pub use multiplex::*;
 pub use stream::*;
 pub use tls::*;
-use crate::{CommandRequest, CommandResponse, KvError, Service};
-
 
 // 处理服务器端某个 accept 下来的 socket 的读写
 // pub struct ProstServerStream<S> {
@@ -50,13 +50,10 @@ where
             info!("process cmd: {:?}", cmd);
             let resp = self.service.execute(cmd);
             stream.send(resp).await.unwrap();
-
         }
-        
+
         Ok(())
     }
-
-
 }
 
 impl<S> ProstClientStream<S>
@@ -64,7 +61,9 @@ where
     S: AsyncRead + AsyncWrite + Unpin + Send,
 {
     pub fn new(stream: S) -> Self {
-        Self { inner: ProstStream::new(stream), }
+        Self {
+            inner: ProstStream::new(stream),
+        }
     }
 
     pub async fn execute(&mut self, cmd: CommandRequest) -> Result<CommandResponse, KvError> {
@@ -76,29 +75,25 @@ where
             None => Err(KvError::Internal("Didn't get any response".into())),
         }
     }
-
-
 }
-
-
 
 #[cfg(test)]
 pub mod utils {
     use std::task::Poll;
 
-    use bytes::{BytesMut, BufMut};
+    use bytes::{BufMut, BytesMut};
     use tokio::io::{AsyncRead, AsyncWrite};
 
-    
+    #[derive(Default)]
     pub struct DummyStream {
         pub buf: BytesMut,
     }
 
     impl AsyncRead for DummyStream {
         fn poll_read(
-        self: std::pin::Pin<&mut Self>,
-        _cx: &mut std::task::Context<'_>,
-        buf: &mut tokio::io::ReadBuf<'_>,
+            self: std::pin::Pin<&mut Self>,
+            _cx: &mut std::task::Context<'_>,
+            buf: &mut tokio::io::ReadBuf<'_>,
         ) -> std::task::Poll<std::io::Result<()>> {
             let len = buf.capacity();
             let data = self.get_mut().buf.split_to(len);
@@ -109,19 +104,25 @@ pub mod utils {
 
     impl AsyncWrite for DummyStream {
         fn poll_write(
-        self: std::pin::Pin<&mut Self>,
-        _cx: &mut std::task::Context<'_>,
-        buf: &[u8],
+            self: std::pin::Pin<&mut Self>,
+            _cx: &mut std::task::Context<'_>,
+            buf: &[u8],
         ) -> Poll<Result<usize, std::io::Error>> {
             self.get_mut().buf.put_slice(buf);
             Poll::Ready(Ok(buf.len()))
         }
 
-        fn poll_flush(self: std::pin::Pin<&mut Self>, _cx: &mut std::task::Context<'_>) -> Poll<Result<(), std::io::Error>> {
+        fn poll_flush(
+            self: std::pin::Pin<&mut Self>,
+            _cx: &mut std::task::Context<'_>,
+        ) -> Poll<Result<(), std::io::Error>> {
             Poll::Ready(Ok(()))
         }
 
-        fn poll_shutdown(self: std::pin::Pin<&mut Self>, _cx: &mut std::task::Context<'_>) -> Poll<Result<(), std::io::Error>> {
+        fn poll_shutdown(
+            self: std::pin::Pin<&mut Self>,
+            _cx: &mut std::task::Context<'_>,
+        ) -> Poll<Result<(), std::io::Error>> {
             Poll::Ready(Ok(()))
         }
     }
